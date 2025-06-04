@@ -1,1 +1,1 @@
-[{"targets": ["autoscale_service-177de:5000", "autoscale_service-ae324:5000"], "labels": {"job": "flask-autoscaled"}}]
+[{"targets": [], "labels": {"job": "flask-autoscaled"}}]
