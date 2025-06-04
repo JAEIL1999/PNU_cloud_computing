@@ -8,6 +8,10 @@ from metrics import PrometheusClient, DockerManager, clear_prometheus_targets
 
 
 class AutoScaler:
+    """
+    scale-out only if CPU > threshold for ≥ 3 minutes
+    scale-in only if CPU < threshold/2 for ≥ 1 minute
+    """
     def __init__(
         self,
         prom_url: str,
@@ -27,47 +31,87 @@ class AutoScaler:
         self.max = max_instances
         self.interval = check_interval
 
-        self.above_since = None
-        self.below_since = None
+        # Timestamps tracking when thresholds were first breached
+        self.above_since = None   # for scale-out
+        self.below_since = None   # for scale-in
+        self.last_scale_time = None  # to skip one fetch cycle after scaling
 
     def scale(self) -> None:
         containers = self.dock.list_containers(self.label)
         autoscaled_containers = [c for c in containers if not self.dock._is_fixed(c)]
         count = len(containers)
+        now = time.time()
 
         if count < self.min:
             logging.info(f"Instances below minimum ({count} < {self.min}). Scaling up.")
             self.dock.run_container(self.image, self.label)
             self.above_since = None
             self.below_since = None
+            self.last_scale_time = now
             return
 
-        usages = [self.dock.get_container_cpu(c) for c in containers]
-        raw_avg = sum(usages) / count if usages else 0.0
-        normalized_avg = raw_avg / 100
+        # If we just scaled, skip this cycle to allow Prometheus to collect new metrics
+        if self.last_scale_time and (now - self.last_scale_time) < self.interval:
+            logging.debug("Skipping Prometheus fetch due to recent scaling action.")
+            return
+
+        num_cpus = multiprocessing.cpu_count()
+
+        # --- Fetch CPU usage from Prometheus ---
+        try:
+            promql = (
+                'sum('
+                'rate(container_cpu_usage_seconds_total{'
+                'container_label_autoscale_service="'
+                + self.label +
+                '"}[1m])'
+                ')'
+            )
+            raw_cpu_seconds_per_sec = self.prom.get_metric(promql)
+        except Exception as e:
+            logging.error(f"Failed to fetch CPU metric from Prometheus: {e}")
+            return
+
+        # If there are running containers, compute normalized average; otherwise treat as zero load
+        if count > 0:
+            avg_cpu_fraction = raw_cpu_seconds_per_sec / (count * num_cpus)
+            avg_cpu = avg_cpu_fraction * 100  # convert to percentage
+        else:
+            avg_cpu = 0.0
 
         logging.info(
-            f"Avg CPU: {normalized_avg * 100:.2f}% across {count} containers"
+            f"Average CPU usage (Prometheus): {avg_cpu:.2f}% across {count} containers "
+            f"(normalized to single-core %)"
         )
 
         now = time.time()
 
-        if normalized_avg > self.threshold:
+        # --- Scale-out logic: CPU > threshold for ≥ 3 minutes ---
+        if avg_cpu > (self.threshold * 100):
             if self.above_since is None:
                 self.above_since = now
                 logging.debug("CPU above threshold, starting timer for scale-out.")
             elif now - self.above_since >= 30 and count < self.max:
                 logging.info("CPU above threshold for ≥ 2 minutes. Scaling up by 1.")
                 self.dock.run_container(self.image, self.label)
+                self.last_scale_time = now
                 self.above_since = None
                 self.below_since = None
+                return
         else:
+            if self.above_since is not None:
+                logging.debug("CPU dropped below threshold, resetting scale-out timer.")
             self.above_since = None
 
         if normalized_avg < self.threshold / 2:
             if self.below_since is None:
                 self.below_since = now
                 logging.debug("CPU below half-threshold, starting timer for scale-in.")
+            elif now - self.below_since >= 1 * 60 and count > self.min:
+                logging.info("CPU below half-threshold for ≥ 1 minute. Scaling down by 1.")
+                to_remove = containers[-1]
+                self.dock.remove_container(to_remove)
+                self.last_scale_time = now
             elif now - self.below_since >= 15 and len(autoscaled_containers) > 0:
                 target = autoscaled_containers[-1]
                 logging.info(f"CPU below half-threshold for ≥ 1 minute. Scaling down container: {target.name}")
@@ -76,7 +120,11 @@ class AutoScaler:
                 self.below_since = None
             elif now - self.below_since >= 30:
                 logging.info("CPU below half-threshold, but no removable container found (all fixed).")
+                return
         else:
+            # reset if CPU rises above scale-in boundary
+            if self.below_since is not None:
+                logging.debug("CPU rose above half-threshold, resetting scale-in timer.")
             self.below_since = None
 
     def run(self) -> None:
@@ -88,14 +136,15 @@ class AutoScaler:
                 logging.error(f"Error during scaling: {e}")
             time.sleep(self.interval)
 
+
 if __name__ == '__main__':
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s [%(levelname)s] %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
+        format='%(Y-%m-%d %H:%M:%S [%(levelname)s] %(message)s'
     )
     clear_prometheus_targets()
     prom_url = os.getenv('PROM_URL', 'http://localhost:8001')
+    prom_url = os.getenv('PROM_URL', 'http://localhost:9090')
     docker_img = os.getenv('DOCKER_IMAGE', '')
     min_i = int(os.getenv('MIN_INSTANCES', 1))
     max_i = int(os.getenv('MAX_INSTANCES', 10))
@@ -128,8 +177,8 @@ if __name__ == '__main__':
         sys.exit(0)
 
     scaler = AutoScaler(
-        prom_url,
-        docker_img,
+        prom_url=prom_url,
+        docker_image=docker_img,
         min_instances=min_i,
         max_instances=max_i,
         cpu_threshold=cpu_th,
