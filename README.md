@@ -141,6 +141,7 @@ PNU_cloud_computing/
 **prometheus/**
 
     targets/flask.json: 스케일링된 백엔드 풀을 관리하는 파일입니다.
+    
     prometheus.yml: Prometheus가 메트릭을 수집할 대상(autoscaler, backend, loadbalancer 등)을 정의하는 설정 파일입니다.
 
 **grafana/**
