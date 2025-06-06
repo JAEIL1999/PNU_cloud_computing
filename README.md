@@ -21,8 +21,8 @@
 오토스케일링 기능을 통해 트래픽 변화에 따라 동적으로 인스턴스 수를 조정함으로써, 최소한의 자원으로 안정적인 서비스 제공이 가능합니다.
 
 **안정적인 트래픽 분산**<br>
-단순 Round-Robin 방식은 서버의 실시간 부하 상태를 고려하지 않기 때문에, 특정 서버에 과부하가 집중될 수 있습니다.<br>
-헬스체크가 구현된 로드밸런서를 사용하면, 응답 지연 또는 장애가 발생한 서버를 자동으로 회피하여 트래픽을 분산시킬 수 있어 가용성을 높입니다.
+단순 Round-Robin 방식은 서버의 실시간 부하 상태를 고려하지 않기 때문에, 특정 서버에 과부하가 집중될 수 있습니다. 이에 latency 모드를 추가하여 성능이 우수한 서버가 더 많은 부하를 감당하도록 설계되었습니다.<br>
+또한, 헬스체크가 구현된 로드밸런서를 사용하면, 응답 지연 또는 장애가 발생한 서버를 자동으로 회피하여 트래픽을 분산시킬 수 있어 가용성을 높입니다.
 
 **운영 편의성 및 가시성 확보**<br>
 Prometheus와 Grafana를 통한 모니터링 및 시각화 시스템을 갖추면, 운영자는 현재 서버 상태를 실시간으로 파악하고, 장애나 과부하 발생 시 즉시 대응할 수 있습니다. 또한 학습을 위해 부하 버튼을 통해서 손쉽게 로드밸런서와 오토스케일링 과정을 시각적으로 확인 가능합니다.
@@ -51,7 +51,7 @@ Prometheus와 Grafana를 통한 모니터링 및 시각화 시스템을 갖추�
 
 **Python 3.x**
 
-    Autoscaler (autoscaler/autoscaler.py)와 메트릭 수집 모듈 (autoscaler/metrics.py)은 Python 언어로 구현되었습니다.
+    프로젝트의 대부분의 모듈들이 모두 Python 언어로 구현되었습니다.
 
     requests 라이브러리를 사용해 Prometheus HTTP API에서 메트릭을 조회하고, Docker SDK (docker 패키지)를 통해 컨테이너 제어(생성, 삭제, 상태 조회) 기능을 제공합니다.
 
@@ -76,25 +76,36 @@ Prometheus와 Grafana를 통한 모니터링 및 시각화 시스템을 갖추�
 PNU_cloud_computing/
 ├── backend/
 │   ├── Dockerfile
-│   └── src/…
+│   └── src/
+│       ├── server.py
+│       └──requirements.txt
 │
 ├── autoscaler/
 │   ├── __init__.py
 │   ├── autoscaler.py
-│   └── metrics.py
+│   ├── metrics.py
+│   └── Dockerfile
 │
-├── loadbalancer/
+├── load_balancer/
 │   ├── __init__.py
 │   ├── health_check.py
 │   ├── balancer.py
-│   └── server.py
+│   ├── server.py
+│   ├── Dockerfile
+│   └── requirements.txt
 │
 ├── prometheus/
+│   ├── targets/
+│   │   └── flask.json
 │   └── prometheus.yml
 │
-│
 ├── grafana/
+│   ├── plugins/
+│   └── grafana.db
+├── .grafana.ini
 │
+├── fe/
+│   └── ...
 │
 └── docker-compose.yml
 ```
@@ -107,9 +118,9 @@ backend/
 
 autoscaler/
 
-    metrics.py: Prometheus로부터 메트릭을 조회하는 PrometheusClient 클래스와, Docker 컨테이너를 제어하는 DockerManager 클래스를 포함합니다.
+    autoscaler.py: 주기적으로 Docker 컨테이너의 CPU 사용률 등을 실시간으로 조회한 뒤, 확장/축소 로직에 따라 새로운 컨테이너를 생성하거나, 제거합니다.
 
-    autoscaler.py: 주기적으로 Prometheus에서 CPU 사용률 등을 조회한 뒤, 확장/축소 로직에 따라 새로운 컨테이너를 생성하거나, 제거합니다.
+    metrics.py: Prometheus로부터 메트릭을 조회하는 PrometheusClient 클래스와, Docker 컨테이너를 제어하는 DockerManager 클래스를 포함합니다.
 
     - Scale-Out: 지정된 CPU 임계치(예: 70%)를 일정 시간(예: 3분) 초과하면 인스턴스를 추가
 
@@ -131,13 +142,15 @@ prometheus/
 
 grafana/
 
-    dashboards/: Grafana에서 불러올 JSON 형식의 대시보드 파일이 위치합니다.
+    Grafana dashboard 출력을 위한 기본 설정 파일들입니다.
 
-        예: CPU 사용률, 메모리 사용량, 컨테이너별 요청 처리량, 오토스케일링 이벤트 그래프 등.
+fe/
+
+    localhost:3000으로 접속시 표현되는 프론트엔드 화면을 구성하는 파일들입니다.
 
 docker-compose.yml
 
-    Prometheus, Grafana, Loadbalancer, Backend(여러 개), Autoscaler를 하나의 네트워크로 묶어 동시에 기동할 수 있도록 정의된 Compose 파일입니다.
+    Prometheus, Grafana, Loadbalancer, Backend, Autoscaler를 하나의 네트워크로 묶어 동시에 기동할 수 있도록 정의된 Compose 파일입니다.
 
     서비스별로 필요한 환경 변수, 볼륨, 포트 매핑 등을 모두 기술해 두어, 로컬 혹은 클라우드 VM에서 단번에 전체 스택을 실행할 수 있도록 합니다.
 
