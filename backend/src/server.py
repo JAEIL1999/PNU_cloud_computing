@@ -35,7 +35,7 @@ def cpu_stress_worker(duration, stop_event):
 def load_handler():
     load_request_counter.inc()
     duration = float(request.args.get("duration", "0.2"))
-    num_cores = min(cpu_count(), 2)
+    num_cores = min(cpu_count())
     processes = []
 
     for _ in range(num_cores):

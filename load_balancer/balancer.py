@@ -1,5 +1,6 @@
 import threading 
 from typing import List, Dict, Optional
+from flask_cors import CORS
 
 lock = threading.Lock()
 backend_servers = []  # List to hold backend server instances 

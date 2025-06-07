@@ -10,6 +10,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # 제외할 헤더들 (프록시 시 문제가 될 수 있는 헤더들)
 EXCLUDED_HEADERS = {

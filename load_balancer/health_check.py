@@ -3,6 +3,7 @@ import time
 import requests
 import logging
 from balancer import update_backend_servers
+from flask_cors import CORS
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
