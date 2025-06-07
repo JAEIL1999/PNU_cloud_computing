@@ -183,9 +183,9 @@ $ docker-compose up -d
 $ docker ps
 
 # 2) 실시간 CPU 사용량 확인
-$ docker-compose logs -f
+$ docker-compose logs -f autoscaler
 ```
-위 내용들이 확인 되었다면 아래 주소를 통해서 메트릭 수집 내용들을 시각적으로 확인 가능합니다.
+위 내용들이 확인 되었다면 아래 주소를 통해서 메트릭 수집 내용들을 시각적으로 확인 가능합니다. 또한 터미널의 로그를 통해서는 실시간으로 CPU 사용량을 확인 가능합니다.
 
 ```bash
 http://localhost:3000
