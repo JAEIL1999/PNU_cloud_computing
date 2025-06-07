@@ -2,6 +2,7 @@ import docker
 import time
 import requests
 from balancer import update_backend_servers
+from flask_cors import CORS
 
 def check_servers(label='autoscale_service'):
     client = docker.from_env()

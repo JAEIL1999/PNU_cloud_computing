@@ -1,8 +1,10 @@
 from flask import Flask, request
 from balancer import choose_backend
 import requests
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 @app.route('/load', methods=['POST'])
 def route_request():
@@ -15,8 +17,8 @@ def route_request():
     except Exception as e:
         print(f"Error forwarding to backend: {e}")
         return "Backend error", 500
-    
-@app.route('/set_mode/<mode>')
+
+@app.route('/set_mode/<mode>', methods=["GET"], strict_slashes=False)
 def set_mode(mode):
     import balancer
     if mode in ['round_robin', 'latency']:
@@ -31,5 +33,5 @@ def health():
 
 if __name__ == '__main__':
     from health_check import start_health_check
-    start_health_check()  # 헬스체크 스레드 시작
+    start_health_check()
     app.run(host='0.0.0.0', port=8080)

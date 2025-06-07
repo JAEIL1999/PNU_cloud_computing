@@ -1,4 +1,5 @@
 import threading 
+from flask_cors import CORS
 
 backend_servers = []  # List to hold backend server instances 
 current_index = 0  # Current index for round-robin balancing 
