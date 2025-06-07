@@ -1,5 +1,7 @@
 import threading 
+from typing import List, Dict, Optional
 
+lock = threading.Lock()
 backend_servers = []  # List to hold backend server instances 
 current_index = 0  # Current index for round-robin balancing 
 selection_mode = "round_robin"  # Default selection mode 
@@ -26,3 +28,13 @@ def choose_backend():
         return min(healthy_servers, key=lambda s: s['latency'])
     else:
         raise ValueError(f"Unknown selection mode: {selection_mode}")
+    
+def get_backend_servers() -> List[Dict]:
+    """
+    현재 백엔드 서버 목록을 반환
+
+    Returns:
+        List[Dict]: 백엔드 서버 정보 리스트
+    """
+    with lock:
+        return backend_servers.copy()

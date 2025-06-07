@@ -18,7 +18,7 @@ services:
         context: ./load_balancer
       image: load_balancer:latest
       ports:
-        - "8081:8080"
+        - "8000:8000"
       depends_on:
         - backend
         - prometheus
