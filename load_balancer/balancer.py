@@ -1,5 +1,5 @@
 import threading 
-from typing import List, Dict, Optional
+from typing import List, Dict
 from flask_cors import CORS
 
 lock = threading.Lock()

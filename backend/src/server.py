@@ -13,7 +13,7 @@ CORS(app)
 metrics = PrometheusMetrics(app, group_by='endpoint')
 load_request_counter = Counter("load_requests_total", "Total /load POST requests")
 
-TARGET_URL = "http://localhost:5000/load"
+TARGET_URL = "http://host.docker.internal:8000/load"
 
 # 전역 상태
 manager = Manager()
@@ -35,7 +35,7 @@ def cpu_stress_worker(duration, stop_event):
 def load_handler():
     load_request_counter.inc()
     duration = float(request.args.get("duration", "0.2"))
-    num_cores = min(cpu_count())
+    num_cores = min(cpu_count(), 2)
     processes = []
 
     for _ in range(num_cores):
@@ -67,7 +67,7 @@ def _send_requests(rps, duration_sec, urls, stop_event):
         try:
             if stop_event.is_set():
                 break
-            response = requests.post(url, timeout=0.2)
+            response = requests.post(url, timeout=3.0)
             print(f"요청 성공: {response.status_code}")
         except Exception as e:
             print(f"요청 실패: {e}")
@@ -116,7 +116,10 @@ def cpu_toggle():
         load_process = None
         return "stopped"
 
-
+@app.route('/health')
+def health():
+    """헬스체크"""
+    return "OK", 200
 
 @app.route('/metrics')
 def metrics_handler():

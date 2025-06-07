@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from balancer import choose_backend, get_backend_servers
 import requests
+from flask_cors import CORS
 import logging
 import time
 from urllib.parse import urljoin
@@ -126,7 +127,7 @@ def cpu_toggle_proxy():
         logger.error(f"Error forwarding /cpu/toggle: {e}")
         return "Backend error", 500
 
-@app.route('/set_mode/<mode>')
+@app.route('/set_mode/<mode>', methods=["GET"], strict_slashes=False)
 def set_mode(mode):
     """로드밸런싱 모드 변경"""
     import balancer
