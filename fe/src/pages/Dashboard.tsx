@@ -7,7 +7,7 @@ const Dashboard = () => {
     const [status, setStatus] = useState('상태: 대기 중');
     const [isStressOn, setIsStressOn] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [mode, setMode] = useState<'round_robin' | 'latency'>('round_robin');
+    const [mode, setMode] = useState<'round_robin' | 'latency' | 'none'>('round_robin');
 
     const handleMenuClick = (menu: string) => {
         if (menu === 'test') {
@@ -17,11 +17,16 @@ const Dashboard = () => {
         }
     };
 
-    const handleChangeMode = async (newMode: 'round_robin' | 'latency') => {
+    const handleChangeMode = async (newMode: 'round_robin' | 'latency' | 'none') => {
+        setMode(newMode);
+        if (newMode === 'none') {
+            setStatus('📛 로드밸런서 사용 안 함');
+            return;
+        }
+
         try {
             const res = await fetch(`http://localhost:8081/set_mode/${newMode}`);
             if (res.ok) {
-                setMode(newMode);
                 setStatus(`✅ 모드 변경됨: ${newMode}`);
             } else {
                 setStatus('❌ 모드 변경 실패');
@@ -37,15 +42,21 @@ const Dashboard = () => {
         try {
             setStatus(isStressOn ? '⏳ 부하 중지 중...' : `⚡ 부하 시작 중 (${mode} 모드)...`);
 
-            const modeRes = await fetch(`http://localhost:8081/set_mode/${mode}`);
-            if (!modeRes.ok) {
-                setStatus('❌ 로드밸런서 모드 설정 실패');
-                return;
+            if (mode !== 'none') {
+                const modeRes = await fetch(`http://localhost:8081/set_mode/${mode}`);
+                if (!modeRes.ok) {
+                    setStatus('❌ 로드밸런서 모드 설정 실패');
+                    return;
+                }
             }
 
-            const res = await fetch('http://localhost:5000/cpu/toggle', {
-                method: 'POST',
-            });
+            const res = await fetch(
+                mode === 'none'
+                    ? 'http://localhost:5000/cpu/toggle'
+                    : 'http://localhost:8081/load',
+                { method: 'POST' }
+            );
+
             const text = await res.text();
 
             if (text === 'started') {

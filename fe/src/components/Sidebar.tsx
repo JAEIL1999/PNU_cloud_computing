@@ -3,10 +3,9 @@ type Props = {
     selected: string | null;
     isStressOn: boolean;
     isLoading?: boolean;
-    mode: 'round_robin' | 'latency';
-    onChangeMode: (mode: 'round_robin' | 'latency') => Promise<void>;
+    mode: 'round_robin' | 'latency' | 'none';
+    onChangeMode: (mode: 'round_robin' | 'latency' | 'none') => Promise<void>;
 };
-
 
 const Sidebar = ({
     onSelect,
@@ -29,9 +28,9 @@ const Sidebar = ({
                 📊 전체 대시보드
             </button>
 
-            {/* 라디오 버튼으로 모드 선택 */}
             <div className="mt-6">
                 <h3 className="text-sm font-semibold mb-2">로드밸런싱 모드</h3>
+
                 <label className="block mb-2">
                     <input
                         type="radio"
@@ -41,9 +40,10 @@ const Sidebar = ({
                         onChange={() => onChangeMode('round_robin')}
                         className="mr-2"
                     />
-                    🔄 라운드로빈
+                    라운드로빈
                 </label>
-                <label className="block">
+
+                <label className="block mb-2">
                     <input
                         type="radio"
                         name="mode"
@@ -52,7 +52,19 @@ const Sidebar = ({
                         onChange={() => onChangeMode('latency')}
                         className="mr-2"
                     />
-                    🚀 레이턴시
+                    레이턴시
+                </label>
+
+                <label className="block">
+                    <input
+                        type="radio"
+                        name="mode"
+                        value="none"
+                        checked={mode === 'none'}
+                        onChange={() => onChangeMode('none')}
+                        className="mr-2"
+                    />
+                    선택 안함
                 </label>
             </div>
 
