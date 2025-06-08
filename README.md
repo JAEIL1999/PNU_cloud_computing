@@ -73,6 +73,10 @@ Prometheus와 Grafana를 통한 모니터링 및 시각화 시스템을 갖추�
 
 ## 💡 프로젝트 결과물 설명
 
+### 흐름도 다이어그램
+![diagram](https://github.com/user-attachments/assets/d8232aa9-54e4-41e8-ae77-4e1bd8e93af5)
+
+
 ### 디렉토리 구조
 ```bash
 PNU_cloud_computing/
