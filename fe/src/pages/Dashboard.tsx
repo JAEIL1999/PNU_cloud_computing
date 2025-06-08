@@ -25,7 +25,7 @@ const Dashboard = () => {
         }
 
         try {
-            const res = await fetch(`http://localhost:8081/set_mode/${newMode}`);
+            const res = await fetch(`http://localhost:8000/set_mode/${newMode}`);
             if (res.ok) {
                 setStatus(`✅ 모드 변경됨: ${newMode}`);
             } else {
@@ -43,7 +43,7 @@ const Dashboard = () => {
             setStatus(isStressOn ? '⏳ 부하 중지 중...' : `⚡ 부하 시작 중 (${mode} 모드)...`);
 
             if (mode !== 'none') {
-                const modeRes = await fetch(`http://localhost:8081/set_mode/${mode}`);
+                const modeRes = await fetch(`http://localhost:8000/set_mode/${mode}`);
                 if (!modeRes.ok) {
                     setStatus('❌ 로드밸런서 모드 설정 실패');
                     return;
@@ -53,20 +53,21 @@ const Dashboard = () => {
             const res = await fetch(
                 mode === 'none'
                     ? 'http://localhost:5000/cpu/toggle'
-                    : 'http://localhost:8081/load',
+                    : 'http://localhost:8000/cpu/toggle',
                 { method: 'POST' }
             );
 
             const text = await res.text();
+            console.log('서버 응답:', text);
 
-            if (text === 'started') {
+            if (text === 'started' || text === 'ok') {
                 setIsStressOn(true);
                 setStatus(`🔥 부하 시작됨 (${mode} 모드)`);
             } else if (text === 'stopped') {
                 setIsStressOn(false);
                 setStatus('🧊 부하 중지됨');
             } else {
-                setStatus('⚠️ 알 수 없는 응답');
+                setStatus(`⚠️ 알 수 없는 응답: ${text}`);
             }
         } catch (err) {
             console.error(err);

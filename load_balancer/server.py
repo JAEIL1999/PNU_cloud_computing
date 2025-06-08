@@ -26,7 +26,7 @@ def filter_headers(headers):
         if key.lower() not in EXCLUDED_HEADERS
     }
 
-def forward_request(target_url, method, data=None, headers=None, params=None, max_retries=2):
+def forward_request(target_url, method, data=None, headers=None, params=None, max_retries=3):
     """백엔드 서버로 요청을 전달하는 함수 - 백엔드 타임아웃에 맞춰 조정"""
     filtered_headers = filter_headers(headers or {})
     
@@ -40,7 +40,7 @@ def forward_request(target_url, method, data=None, headers=None, params=None, ma
                 data=data,
                 headers=filtered_headers,
                 params=params,
-                timeout=3,  # 백엔드의 0.2초 타임아웃보다 여유있게 설정
+                timeout=4,  # 백엔드의 0.2초 타임아웃보다 여유있게 설정
                 allow_redirects=False
             )
             
@@ -56,7 +56,7 @@ def forward_request(target_url, method, data=None, headers=None, params=None, ma
         
         if attempt < max_retries:
             time.sleep(0.1)  # 짧은 재시도 간격
-    
+    time.sleep(0.5)  # 모든 시도 실패 후 잠시 대기
     return None
 
 @app.route('/load', methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH'])
@@ -76,10 +76,10 @@ def route_request():
         return "No healthy servers", 503
     
     target_url = f"{server['host']}/load"
-    logger.info(f"Selected backend: {server.get('container_name', 'unknown')} ({server['host']})")
+    logger.info(f"Selected backend: {server.get('container_name')} ({server['host']})")
     
     # 최대 3번의 서버로 재시도 (백엔드가 빠르게 실패할 수 있으므로)
-    for retry in range(5):
+    for retry in range(3):
         response = forward_request(
             target_url=target_url,
             method=request.method,
@@ -102,7 +102,7 @@ def route_request():
                 return response.content, response.status_code
         
         # 실패한 경우 다른 서버 선택
-        if retry < 2:
+        if retry < 3:
             logger.warning(f"Backend {server['host']} failed, trying another server")
             server = choose_backend()
             if not server:
@@ -121,7 +121,7 @@ def cpu_toggle_proxy():
     
     try:
         target_url = f"{server['host']}/cpu/toggle"
-        response = requests.post(target_url, timeout=5)
+        response = requests.post(target_url, timeout=4)
         return response.content, response.status_code
     except Exception as e:
         logger.error(f"Error forwarding /cpu/toggle: {e}")
@@ -132,10 +132,10 @@ def set_mode(mode):
     """로드밸런싱 모드 변경"""
     import balancer
     
-    valid_modes = ['round_robin', 'latency', 'least_connections', 'weighted']
+    valid_modes = ['round_robin', 'latency']
     
     if mode in valid_modes:
-        old_mode = getattr(balancer, 'selection_mode', 'unknown')
+        old_mode = getattr(balancer, 'selection_mode')
         balancer.selection_mode = mode
         logger.info(f"Load balancing mode changed: {old_mode} -> {mode}")
         return jsonify({
@@ -149,7 +149,22 @@ def set_mode(mode):
             "error": "Invalid mode",
             "available_modes": valid_modes
         }), 400
-
+        
+@app.route('/refresh-servers', methods=['GET', 'POST'])
+def refresh_servers():
+    """오토스케일러로부터 서버 목록 갱신 요청을 받는 엔드포인트"""
+    try:
+        # Health check 서비스에 서버 재스캔 신호 전송
+        from health_check import trigger_server_refresh
+        trigger_server_refresh()
+        
+        logger.info("🔄 Server refresh triggered by autoscaler")
+        return jsonify({"status": "success", "message": "Server refresh triggered"}), 200
+        
+    except Exception as e:
+        logger.error(f"Error triggering server refresh: {e}")
+        return jsonify({"error": "Failed to trigger server refresh"}), 500
+    
 @app.route('/health')
 def health():
     """로드밸런서 헬스체크"""
@@ -174,6 +189,7 @@ def status():
                 "servers": [
                     {
                         "host": s['host'],
+                        "ip": s.get('ip', 'unknown'),
                         "status": s.get('status', 'unknown'),
                         "latency": s.get('latency', 'unknown'),
                         "container_name": s.get('container_name', 'unknown')

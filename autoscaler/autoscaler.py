@@ -3,7 +3,7 @@ import logging
 import os
 import multiprocessing
 import signal, sys, docker, json
-
+import requests
 from metrics import PrometheusClient, DockerManager, clear_prometheus_targets
 
 
@@ -16,7 +16,8 @@ class AutoScaler:
         cpu_threshold: float = 0.7,
         min_instances: int = 1,
         max_instances: int = 10,
-        check_interval: int = 10
+        check_interval: int = 10,
+        load_balancer_url: str = "http://host.docker.internal:8000"
     ):
         self.prom = PrometheusClient(prom_url)
         self.dock = DockerManager()
@@ -30,6 +31,27 @@ class AutoScaler:
         self.above_since = None
         self.below_since = None
 
+        self.load_balancer_url = load_balancer_url
+        
+    def notify_load_balancer(self):
+        """로드밸런서에 서버 목록 갱신 요청"""
+        try:
+            refresh_url = f"{self.load_balancer_url}/refresh-servers"
+            
+            response = requests.post(refresh_url, timeout=3)
+            
+            if response.status_code == 200:
+                logging.info("✅ Load balancer server refresh triggered")
+            else:
+                logging.warning(f"⚠️ Load balancer refresh failed: {response.status_code}")
+                
+        except requests.exceptions.ConnectionError:
+            logging.warning("🔌 Could not connect to load balancer")
+        except requests.exceptions.Timeout:
+            logging.warning("⏰ Load balancer request timed out")
+        except Exception as e:
+            logging.error(f"❗ Error notifying load balancer: {e}")
+            
     def scale(self) -> None:
         containers = self.dock.list_containers(self.label)
         autoscaled_containers = [c for c in containers if not self.dock._is_fixed(c)]
@@ -39,6 +61,9 @@ class AutoScaler:
         if count < self.min:
             logging.info(f"Instances below minimum ({count} < {self.min}). Scaling up.")
             self.dock.run_container(self.image, self.label)
+            #서버 갱신 요청
+            self.notify_load_balancer()
+            
             self.above_since = None
             self.below_since = None
             return
@@ -62,6 +87,10 @@ class AutoScaler:
             elif now - self.above_since >= 30 and count < self.max:
                 logging.info("CPU above threshold for ≥ 2 minutes. Scaling up by 1.")
                 self.dock.run_container(self.image, self.label)
+                
+                # 서버 갱신 요청
+                self.notify_load_balancer()
+                
                 self.above_since = None
                 self.below_since = None
         else:
@@ -75,6 +104,10 @@ class AutoScaler:
                 target = autoscaled_containers[-1]
                 logging.info(f"CPU below half-threshold for ≥ 1 minute. Scaling down container: {target.name}")
                 self.dock.remove_container(target)
+                
+                 # 서버 갱신 요청
+                self.notify_load_balancer()
+                
                 self.above_since = None
                 self.below_since = None
             elif now - self.below_since >= 30:

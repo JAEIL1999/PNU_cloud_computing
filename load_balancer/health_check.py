@@ -1,14 +1,20 @@
 import docker
 import time
 import requests
+import threading 
 import logging
 from balancer import update_backend_servers
 from flask_cors import CORS
+from collections import defaultdict
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-def check_servers(label='image', network_name='pnu_cloud_computing_mynet'):
+server_last_success = defaultdict(float)
+
+immediate_check_event = threading.Event()
+
+def check_servers(network_name='pnu_cloud_computing_mynet'):
     client = docker.from_env()
     
     while True:
@@ -30,6 +36,7 @@ def check_servers(label='image', network_name='pnu_cloud_computing_mynet'):
                             servers.append({
                                 'container_id': container.id[:12],
                                 'container_name': container.name,
+                                'ip': ip,
                                 'host': f'http://{ip}:5000',
                                 'status': 'unknown',  # Assume unknown initially
                                 'latency': float('inf')  # Placeholder for latency
@@ -50,38 +57,54 @@ def check_servers(label='image', network_name='pnu_cloud_computing_mynet'):
             
             # 서버 상태 점검
             healthy_servers = []
+        
             for server in servers:
+                server_id = server['host']
+                ip = server['ip']
+                target_url = f"{server['host']}/health"
                 try:
                     start = time.time()
-                    resp = requests.get(server['host'] + '/health', timeout=2)
+                    resp = requests.get(target_url, timeout=15)
                     end = time.time()
                     if resp.status_code == 200:
                         server['status'] = 'healthy'
-                        server['latency'] = end - start
+                        server['latency'] = round(end - start, 3)
+                        server_last_success[server_id] = time.time()
                         healthy_servers.append(server)
                         logger.info(f"✅ {server['container_name']} - Healthy (latency: {server['latency']}s)")
                     else:
-                        server['status'] = 'unhealthy'
+                        server['status'] = 'healthy'
                         server['latency'] = float('inf')
+                        healthy_servers.append(server)
                         logger.warning(f"❌ {server['container_name']} - Unhealthy (status: {resp.status_code})")
                         
                 except requests.exceptions.Timeout:
-                    server['status'] = 'unhealthy'
+                    server['status'] = 'healthy'
                     server['latency'] = float('inf')
+                    healthy_servers.append(server)
                     logger.error(f"⏰ {server['container_name']} - Timeout")
                     
                 except requests.exceptions.ConnectionError:
-                    server['status'] = 'unhealthy'
+                    server['status'] = 'healthy'
                     server['latency'] = float('inf')
+                    healthy_servers.append(server)
                     logger.error(f"🔌 {server['container_name']} - Connection failed")
 
                 except Exception as e:
-                    server['status'] = 'unhealthy'
+                    server['status'] = 'healthy'
                     server['latency'] = float('inf')
+                    healthy_servers.append(server)
                     logger.error(f"❗ {server['container_name']} - Health check failed: {e}")
-            
+        
+            last_success = server_last_success.get(server_id, 0)
+            grace_period = 600  # 10분 grace period
+            if time.time() - last_success < grace_period and server['status'] == 'unhealthy':
+                server['status'] = 'healthy'  # 최근에 성공했으면 healthy로 처리
+                server['latency'] = float('inf')  # degraded 상태는 latency를 무한대로 설정
+                logger.warning(f"⚠️ {server.get('container_name', server_id)} - Failed but keeping as degraded (recent success)")
+                healthy_servers.append(server)
             #Update Load_balancer        
-            update_backend_servers(healthy_servers)
+            update_backend_servers(servers)
         
             total_servers = len(servers)
             healthy_count = len(healthy_servers)
@@ -101,8 +124,16 @@ def check_servers(label='image', network_name='pnu_cloud_computing_mynet'):
             
         print(f"✅ Updated backend servers: {servers}")
         
-        time.sleep(300)
+        if immediate_check_event.wait(timeout=300):
+            immediate_check_event.clear()  # 신호 끄기
+            logger.info("⚡ 즉시 체크 요청 받음!")
+            # 다시 루프 시작 (서버 재체크)
+        else:
+            logger.info("⏰ 5분 경과, 정상 체크")
 
+def trigger_server_refresh():
+    immediate_check_event.set()  # 신호 보내기!
+    
 def start_health_check():
     """Health check를 별도 스레드에서 시작"""
     import threading
