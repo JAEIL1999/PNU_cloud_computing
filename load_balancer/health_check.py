@@ -24,7 +24,11 @@ async def check_single_server(client: httpx.AsyncClient, server):
         response = await client.get(target_url, timeout=5.0)
         if response.status_code == 200:
             server["status"] = "healthy"
-            server["latency"] = round(time.time() - server.get("_start_time", time.time()), 3)
+            start_check = time.time()
+            response = await client.get(target_url, timeout=5.0)
+            if response.status_code == 200:
+                server["status"] = "healthy"
+                server["latency"] = round(time.time() - start_check, 3)
             fail_counters[server_id] = 0
         else:
             raise Exception(f"Status {response.status_code}")
