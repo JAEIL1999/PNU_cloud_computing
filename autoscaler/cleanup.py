@@ -1,9 +1,8 @@
-import json
-import os
 import signal
 import sys
 
 import docker
+from targets import FLASK_TARGET_PATH, clear_prometheus_targets
 
 
 def cleanup_autoscaled_containers():
@@ -18,11 +17,8 @@ def cleanup_autoscaled_containers():
 
 
 def clear_local_target_file():
-    flask_json_path = "/app/prometheus/targets/flask.json"
-    if os.path.exists(flask_json_path):
-        with open(flask_json_path, "w") as file:
-            json.dump([], file)
-        print("flask.json cleared")
+    clear_prometheus_targets()
+    print(f"Cleared target file: {FLASK_TARGET_PATH}")
 
 
 def register_signal_handlers():
