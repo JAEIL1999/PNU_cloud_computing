@@ -50,7 +50,7 @@ class AutoScaler:
         num_cpus = multiprocessing.cpu_count()
         usages = [self.dock.get_container_cpu(container) for container in containers]
         raw_avg = sum(usages) / count if usages else 0.0
-        avg_cpu = raw_avg / num_cpus
+        avg_cpu = raw_avg
 
         logging.info("Avg CPU: %.2f%% (per core) across %s containers", avg_cpu, count)
 
