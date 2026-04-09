@@ -1,3 +1,278 @@
+# Changelog
+
+## 1.17.0
+
+##### Chores
+
+* **release:**
+  *  publish github release (#825) (0c0d43ee)
+  *  publish the release to github (6554320b)
+* **deps:**
+  *  update dependency tar to v7.5.8 [security] (#829) (e549788b)
+  *  bump esbuild to 0.25.0 (#827) (ec99bdeb)
+  *  update dependency @bufbuild/protoc-gen-es to v2.11.0 (#810) (55e4a194)
+  *  update dependency terser-webpack-plugin to v5.3.16 (#807) (80596259)
+  *  update dependency @types/lodash to v4.17.23 (#806) (46bf6def)
+  *  update dependency webpack to v5.104.1 [security] (#813) (f3bab720)
+*  Upgrade packages (#814) (9879f7b4)
+
+##### Bug Fixes
+
+* **deps:**  update grafana packages (#808) (807f4d8a)
+*  use selected profile's version in function details panel (#801) (5b2a85ea)
+
+##### Other Changes
+
+* **release:**  publish the release to github" (00c520df)
+
+
+## 1.16.0
+
+##### New Features
+
+*  switch cloud-home-app plugin proxy usage to own (#579) (689f4c82)
+
+
+## 1.15.2
+
+##### Chores
+
+* **deps:**
+  *  Upgrade dependencies (#804) (418c922d)
+  *  Upgrade playwright to 1.58.0 (#805) (4a322241)
+
+
+## 1.15.1
+
+
+## 1.15.0
+
+##### Chores
+
+* **deps:**
+  *  bump js-yaml from 3.14.1 to 3.14.2 (#783) (27db8c2c)
+  *  bump form-data from 4.0.0 to 4.0.5 (#781) (d7a8550e)
+  *  bump brace-expansion from 1.1.11 to 1.1.12 (#782) (3bb1e0fb)
+  *  Update react-router-dom to 6.30.3 (#798) (648f0af6)
+  *  bump @modelcontextprotocol/sdk from 1.24.3 to 1.25.2 (#789) (76fe5444)
+  *  bump undici from 7.16.0 to 7.18.2 (#794) (b24186dc)
+  *  bump body-parser from 2.2.0 to 2.2.2 (#788) (5d90c82f)
+  *  bump qs from 6.14.0 to 6.14.1 (#786) (8a9e6002)
+*  Remove investigations (#787) (188f8623)
+
+##### Continuous Integration
+
+*  update workflows (#792) (98baf273)
+
+##### New Features
+
+*  plot exemplars candidates in timeseries panel at the Flame graph view (#748) (9c87a512)
+
+##### Bug Fixes
+
+* **assistant:**  pass origin to openAssistant (#797) (d3a13ab7)
+*  Handle missing location lines from profiles (#785) (9c7616c2)
+
+
+## 1.14.2
+
+##### Chores
+
+*  update llm plugin (#780) (9e097bd5)
+
+
+## 1.14.1
+
+##### Bug Fixes
+
+*  call /render for dot profiles only once Assistant is being opened (#778) (cbb2d764)
+* **DiffFlameGraph:**  prevent API queries with zero time ranges (#777) (665d9f9b)
+
+
+## 1.14.0
+
+##### Chores
+
+*  fix styling (#771) (14655e41)
+
+##### New Features
+
+* **DiffFlameGraph:**  Analyze Diff Flame Graph with Grafana Assistant (#752) (e18b2639)
+
+
+## 1.13.0
+
+##### Chores
+
+* **deps:**
+  *  update dependency @connectrpc/protoc-gen-connect-query to v2.2.0 (#764) (6241abc8)
+  *  update dependency @babel/core to v7.28.5 (#762) (eead60db)
+  *  update dependency @stylistic/eslint-plugin-ts to v2.13.0 (#765) (0c8acd3d)
+  *  update dependency @bufbuild/protoc-gen-es to v2.10.1 (#763) (a3326219)
+  *  update dependency dotenv to v16.6.1 (#766) (11df5159)
+  *  update dependency glob to v10.5.0 [security] (#751) (5cc428be)
+*  Upgrade Playwright to 1.57.0 (#760) (c094d592)
+*  Update Grafana version used locally to match CI (#753) (8acf4daf)
+*  remove unused deps (#742) (4066bdbc)
+*  Add renovate rules (#746) (a06fa858)
+*  update scenes (#733) (7d338e75)
+* **config:**  migrate config renovate.json (#749) (608da61c)
+
+##### New Features
+
+*  Support source code integration for languages without file paths (#747) (a81f7109)
+*  Embed Profiles Drilldown (#621) (b510bd19)
+
+##### Bug Fixes
+
+*  Do not force refresh ServiceName and ProfileMetric variables on time range change (#759) (4450a9ec)
+
+
+## 1.12.0
+
+##### Chores
+
+* **deps:**
+  *  update dependency @types/prismjs to v1.26.5 (#741) (fb16ca90)
+  *  bump assistant-sdk version to 0.1.4 (6ecd1896)
+  *  pin dependencies (#627) (74144bf5)
+*  fix shared workflows versions (#736) (72747451)
+*  Remove unused CI workflows (#634) (838fe138)
+* **ci:**  Push PR branches to ops catalog (#735) (abd1e90f)
+
+##### New Features
+
+*  adaptive profiles boost button extension point (#626) (04964dc7)
+* **Recording Rules:**  Show recording rule labels (#636) (e173a5d6)
+
+##### Other Changes
+
+* local (#744) (313db674)
+
+
+## 1.11.0
+
+##### Chores
+
+*  fix version bump (#635) (844dfea2)
+*  Update flamegraph package (#620) (6f31ac78)
+*  Fix plugin.json formatting (#612) (f1f22f27)
+*  Auto deploy to dev/ops (#618) (0b13153e)
+* **annotations:**  Show annotations only on main timeline panels (#624) (c14295b4)
+* **Recording Rules:**  Add disclaimer to metrics from profiles (#611) (4b306a5f)
+
+##### Continuous Integration
+
+*  Use version 2.x.x of plugin workflows (#622) (70ce3fa9)
+
+##### New Features
+
+* **Recording Rules:**  Allow using service_name as group by label (#617) (2825ee75)
+
+##### Bug Fixes
+
+* **Recording Rules:**  Do not pass empty matchers (#616) (602530fe)
+* **GitHub:**  Keep GitHub Integration cookie between tabs (#609) (bb8ee3dd)
+
+
+## 1.10.1
+
+##### Chores
+
+*  Update flamegraph package (#607) (12c37c7e)
+
+
+## 1.10.0
+
+##### Chores
+
+*  Add missing target to plugin.json (#605) (3d7c76dc)
+*  Update @grafana/faro-web-sdk to latest release (#603) (cb3615dc)
+* **e2e:**  Upgrade Playwright to 1.55.1 (#604) (95940103)
+
+##### Continuous Integration
+
+*  Deploy automatically to ops (#600) (9632905b)
+
+##### New Features
+
+*  update extension point for grafana assistant, add vars and tests (#593) (50820a7a)
+
+##### Bug Fixes
+
+*  Update grafana/assistant (#597) (6a5758ac)
+
+
+## 1.9.0
+
+##### Chores
+
+*  Use a specific version of Pyroscope for e2e tests (#587) (ab5a4543)
+
+##### Continuous Integration
+
+*  Add a workflow to publish a PR/branch (#578) (c690fc67)
+
+##### New Features
+
+* **Metrics From Profiles:**  Automatically prefix metric name (#592) (7404aba4)
+*  Add rate calculation support and step synchronization (#548) (0538e0bc)
+* **AI:**  Integrate with Grafana Assistant (#558) (0756b05a)
+
+##### Bug Fixes
+
+*  recording rules list to use rule id as row id (#591) (d07f2528)
+*  use rule id as row id (4e261a87)
+
+
+## 1.8.1
+
+
+## 1.8.0
+
+##### Chores
+
+*  Upgrade playwright to 1.55 (#576) (601ee656)
+*  Create plugin update (#564) (2ef28dc6)
+
+##### Continuous Integration
+
+*  Use shared action to create a changelog (32e56544)
+*  Update release workflow (#573) (939c7b68)
+*  Push build to ops (#570) (f42be894)
+*  Use shared workflows for publishing (#565) (96855248)
+
+# [1.7.0](https://github.com/grafana/profiles-drilldown/compare/v1.6.0...v1.7.0) (2025-07-31)
+
+
+### Features
+
+* Propagate the redirect_uri for GitHub logins ([#541](https://github.com/grafana/profiles-drilldown/issues/541)) ([d0ae06c](https://github.com/grafana/profiles-drilldown/commit/d0ae06c4a90cbfc5b6e1d1764b5ea196e3029f7d))
+* **Recording Rules:** Pass function name to recording rules ([#543](https://github.com/grafana/profiles-drilldown/issues/543)) ([9000fd4](https://github.com/grafana/profiles-drilldown/commit/9000fd4d478dbac7adb59d7d07f421be570d58ec))
+* Support for provisioned recording rules ([#549](https://github.com/grafana/profiles-drilldown/issues/549)) ([dc5fea3](https://github.com/grafana/profiles-drilldown/commit/dc5fea349e8198dce53f32e27ee124abc42bb9e7))
+
+
+
+# [1.6.0](https://github.com/grafana/profiles-drilldown/compare/v1.5.0...v1.6.0) (2025-07-29)
+
+
+### Features
+
+* **GitHub:** Allow providing GitHub integration details manually ([#538](https://github.com/grafana/profiles-drilldown/issues/538)) ([70a61be](https://github.com/grafana/profiles-drilldown/commit/70a61be46936daa7b354d2671538bb2bc6c55c76))
+
+
+
+# [1.5.0](https://github.com/grafana/profiles-drilldown/compare/v1.4.1...v1.5.0) (2025-07-10)
+
+
+### Features
+
+* **GitHub Integration:** Keep GitHub auth cookie within the same session if the data source doesn't change ([#535](https://github.com/grafana/profiles-drilldown/issues/535)) ([8a7b157](https://github.com/grafana/profiles-drilldown/commit/8a7b15791906ce4218a3a4ebf43969039b529727))
+* **Metrics from Profiles:** Allow creating recording rules for all services ([#525](https://github.com/grafana/profiles-drilldown/issues/525)) ([837393b](https://github.com/grafana/profiles-drilldown/commit/837393b8d8ef41d50528722b03071c16ebc027fa))
+* **metrics:** Show annotations ([#522](https://github.com/grafana/profiles-drilldown/issues/522)) ([5259b0b](https://github.com/grafana/profiles-drilldown/commit/5259b0b449bd37e18e1d406bc988a44f7f7dc709))
+
+
+
 ## [1.4.1](https://github.com/grafana/profiles-drilldown/compare/v1.4.0...v1.4.1) (2025-05-21)
 
 

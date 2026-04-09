@@ -3,7 +3,41 @@
     "type": "app",
     "name": "Grafana Metrics Drilldown",
     "id": "grafana-metricsdrilldown-app",
+    "dependencies": {
+        "grafanaDependency": ">=11.6.0",
+        "plugins": [],
+        "extensions": {
+            "exposedComponents": [
+                "grafana/add-to-dashboard-form/v1",
+                "grafana/alerting/create-alert-from-panel/v1",
+                "grafana/prometheus-query-results/v1",
+                "grafana/query-library-context/v1"
+            ]
+        }
+    },
+    "preload": true,
     "autoEnabled": true,
+    "languages": [
+        "en-US",
+        "cs-CZ",
+        "de-DE",
+        "es-ES",
+        "fr-FR",
+        "hu-HU",
+        "id-ID",
+        "it-IT",
+        "ja-JP",
+        "ko-KR",
+        "nl-NL",
+        "pl-PL",
+        "pt-BR",
+        "pt-PT",
+        "ru-RU",
+        "sv-SE",
+        "tr-TR",
+        "zh-Hans",
+        "zh-Hant"
+    ],
     "info": {
         "keywords": [
             "drilldown",
@@ -22,20 +56,16 @@
         },
         "screenshots": [
             {
-                "name": "homepage",
-                "path": "img/homepage.png"
-            },
-            {
                 "name": "metricselect",
-                "path": "img/metricselect.png"
+                "path": "img/metrics-drilldown.png"
             },
             {
                 "name": "breakdown",
                 "path": "img/breakdown.png"
             }
         ],
-        "version": "1.0.1",
-        "updated": "2025-05-06",
+        "version": "1.0.34",
+        "updated": "2026-03-11",
         "links": [
             {
                 "name": "GitHub",
@@ -57,25 +87,59 @@
             "defaultNav": true
         }
     ],
-    "dependencies": {
-        "grafanaDependency": ">=11.6.0",
-        "plugins": []
-    },
-    "preload": true,
     "extensions": {
         "addedLinks": [
             {
                 "targets": [
                     "grafana/dashboard/panel/menu",
-                    "grafana/explore/toolbar/action"
+                    "grafana/explore/toolbar/action",
+                    "grafana/alerting/alertingrule/queryeditor",
+                    "grafana-assistant-app/navigateToDrilldown/v1"
                 ],
                 "title": "Open in Grafana Metrics Drilldown",
                 "description": "Open current query in the Grafana Metrics Drilldown view"
+            },
+            {
+                "targets": [
+                    "grafana-metricsdrilldown-app/grafana-assistant-app/navigateToDrilldown/v0-alpha"
+                ],
+                "title": "Navigate to metrics drilldown",
+                "description": "Build a url path to the metrics drilldown"
+            },
+            {
+                "targets": [
+                    "grafana/datasources/config/actions",
+                    "grafana/datasources/config/status"
+                ],
+                "title": "Open in Metrics Drilldown",
+                "description": "Browse metrics in Grafana Metrics Drilldown"
             }
         ],
         "extensionPoints": [
             {
-                "id": "grafana-exploremetrics-app/investigation/v1"
+                "id": "grafana-metricsdrilldown-app/open-in-logs-drilldown/v1"
+            }
+        ],
+        "exposedComponents": [
+            {
+                "id": "grafana-metricsdrilldown-app/label-breakdown-component/v1",
+                "title": "Label Breakdown",
+                "description": "A metrics label breakdown view from the Metrics Drilldown app."
+            },
+            {
+                "id": "grafana-metricsdrilldown-app/knowledge-graph-insight-metrics/v1",
+                "title": "Knowledge Graph Source Metrics",
+                "description": "Explore the underlying metrics related to a Knowledge Graph insight"
+            },
+            {
+                "id": "grafana-metricsdrilldown-app/mini-breakdown-component/v1",
+                "title": "Mini Label Breakdown Navigation",
+                "description": "A mini metrics label breakdown view from the Metrics Drilldown app used for navigation."
+            },
+            {
+                "id": "grafana-metricsdrilldown-app/entity-metrics-component/v1",
+                "title": "Entity Metrics",
+                "description": "A metrics exploration view for entity labels from the Metrics Drilldown app."
             }
         ]
     },
