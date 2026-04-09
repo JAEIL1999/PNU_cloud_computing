@@ -24,70 +24,62 @@ manager = Manager()
 stop_event = manager.Event()
 load_process = None
 
-# 실제 CPU 부하를 주는 작업
-def cpu_stress_worker(duration, stop_event):
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+
+# 전역 프로세스 풀 (부하 연산용)
+cpu_executor = ProcessPoolExecutor(max_workers=4)
+
+# 실제 CPU 부하를 주는 작업 (휴식 제거)
+def cpu_stress_worker(duration):
+    # stop_event 제거 (Pool에서 실행하기 위해 단순화)
     end = time.time() + duration
     while time.time() < end:
-        if stop_event.is_set():
-            print("💤 부하 조기 종료")
-            break
-        for i in range(5000):
-            _ = sum(j * j for j in range(1000))
-            if i % 100 == 0:  # 100번마다 휴식
-                time.sleep(0.05)  # 50ms 휴식
+        # 타이트한 루프 연산
+        _ = [i * i for i in range(1000)]
+    return "done"
 
 # 백엔드 서버에서 부하 처리
 @app.route('/load', methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH'])
 def load_handler():
     load_request_counter.inc()
-    duration = float(request.args.get("duration", "0.2"))
-    num_cores = min(cpu_count(), 2)
-    processes = []
-
-    for _ in range(num_cores):
-        p = Process(target=cpu_stress_worker, args=(duration, stop_event))
-        p.start()
-        processes.append(p)
-
-    for p in processes:
-        p.join()
-
+    duration = float(request.args.get("duration", "0.5"))
+    
+    # 프로세스 풀에 부하 작업 던지기 (비차단)
+    # 헬스체크 응답을 방해하지 않기 위해 메인 스레드는 즉시 반환하거나 짧게만 대기
+    cpu_executor.submit(cpu_stress_worker, duration)
+    
     return "ok"
 
-# rps만큼 반복적으로 POST /load 호출
+# rps만큼 병렬로 POST /load 호출
 def _send_requests(rps, duration_sec, url, stop_event):
     if not url:
         return
 
     interval = 1.0 / rps
     end_time = time.time() + duration_sec
-
-    while time.time() < end_time:
-        if stop_event.is_set():
-            print("요청 루프 중단됨")
-            break
-
-        try:
-            response = requests.post(url, timeout=5.0)
-            print(f"요청 성공: {response.status_code}")
-        except Exception as e:
-            print(f"요청 실패: {e}")
-
-        if stop_event.wait(timeout=interval):
-            break
-
+    
+    with ThreadPoolExecutor(max_workers=50) as executor:
+        while time.time() < end_time:
+            if stop_event.is_set():
+                break
+            # 비동기적으로 요청 발사
+            executor.submit(requests.post, url, timeout=5.0)
+            time.sleep(interval)
 
 # 증가하는 RPS로 부하 주기 루프
 def send_http_load_loop(stop_event):
-    url = f"{TARGET_URL}?duration=0.2"
-    step_duration = 2
-    max_rps = 300
-    rps = 50
-    rps_increment = 50
+    url = f"{TARGET_URL}?duration=0.5"
+    step_duration = 5
+    max_rps = 150
+    rps = 20
+    rps_increment = 20
 
+    print(f"🚀 부하 생성 루프 시작 (Target: {url})")
     while not stop_event.is_set():
+        print(f"🔥 현재 부하 강도: {rps} RPS")
         _send_requests(rps, step_duration, url, stop_event)
-        rps = min(rps + rps_increment, max_rps)
+        if rps < max_rps:
+            rps += rps_increment
 
 
 @app.route('/cpu/toggle', methods=['POST'])

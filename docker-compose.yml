@@ -5,8 +5,6 @@ services:
     build:
       context: ./backend
     image: backend
-    ports:
-      - "5000:5000"
     labels:
       - autoscale_service=backend
       - fixed=true
