@@ -1,90 +1,90 @@
+import type { BalancerMode } from '../services/loadBalancer';
+
 type Props = {
-    onSelect: (menu: string) => void;
-    selected: string | null;
-    isStressOn: boolean;
-    isLoading?: boolean;
-    mode: 'round_robin' | 'latency' | 'none';
-    onChangeMode: (mode: 'round_robin' | 'latency' | 'none') => Promise<void>;
+  onSelect: (menu: string) => void;
+  selected: string | null;
+  isStressOn: boolean;
+  isLoading?: boolean;
+  mode: BalancerMode;
+  onChangeMode: (mode: BalancerMode) => Promise<void>;
 };
 
 const Sidebar = ({
-    onSelect,
-    selected,
-    isStressOn,
-    isLoading = false,
-    mode,
-    onChangeMode,
+  onSelect,
+  selected,
+  isStressOn,
+  isLoading = false,
+  mode,
+  onChangeMode,
 }: Props) => {
-    return (
-        <aside className="w-60 h-full bg-gray-900 text-white flex flex-col p-4 shadow-lg">
-            <h2 className="text-xl font-bold mb-6">📁 메뉴</h2>
+  return (
+    <aside className="flex h-full w-60 flex-col bg-gray-900 p-4 text-white shadow-lg">
+      <h2 className="mb-6 text-xl font-bold">Menu</h2>
 
-            <button
-                onClick={() => onSelect('overview')}
-                className={`text-left px-4 py-2 rounded hover:bg-gray-700 transition ${
-                    selected === 'overview' ? 'bg-blue-600' : ''
-                }`}
-            >
-                📊 전체 대시보드
-            </button>
+      <button
+        onClick={() => onSelect('overview')}
+        className={`rounded px-4 py-2 text-left transition hover:bg-gray-700 ${
+          selected === 'overview' ? 'bg-blue-600' : ''
+        }`}
+      >
+        Overview
+      </button>
 
-            <div className="mt-6">
-                <h3 className="text-sm font-semibold mb-2">로드밸런싱 모드</h3>
+      <div className="mt-6">
+        <h3 className="mb-2 text-sm font-semibold">Load Balancing Mode</h3>
 
-                <label className="block mb-2">
-                    <input
-                        type="radio"
-                        name="mode"
-                        value="round_robin"
-                        checked={mode === 'round_robin'}
-                        onChange={() => onChangeMode('round_robin')}
-                        className="mr-2"
-                    />
-                    라운드로빈
-                </label>
+        <label className="mb-2 block">
+          <input
+            type="radio"
+            name="mode"
+            value="round_robin"
+            checked={mode === 'round_robin'}
+            onChange={() => void onChangeMode('round_robin')}
+            className="mr-2"
+          />
+          Round Robin
+        </label>
 
-                <label className="block mb-2">
-                    <input
-                        type="radio"
-                        name="mode"
-                        value="latency"
-                        checked={mode === 'latency'}
-                        onChange={() => onChangeMode('latency')}
-                        className="mr-2"
-                    />
-                    레이턴시
-                </label>
+        <label className="mb-2 block">
+          <input
+            type="radio"
+            name="mode"
+            value="latency"
+            checked={mode === 'latency'}
+            onChange={() => void onChangeMode('latency')}
+            className="mr-2"
+          />
+          Latency
+        </label>
 
-                <label className="block">
-                    <input
-                        type="radio"
-                        name="mode"
-                        value="none"
-                        checked={mode === 'none'}
-                        onChange={() => onChangeMode('none')}
-                        className="mr-2"
-                    />
-                    선택 안함
-                </label>
-            </div>
+        <label className="block">
+          <input
+            type="radio"
+            name="mode"
+            value="none"
+            checked={mode === 'none'}
+            onChange={() => void onChangeMode('none')}
+            className="mr-2"
+          />
+          Direct Backend
+        </label>
+      </div>
 
-            <button
-                onClick={() => onSelect('test')}
-                disabled={isLoading}
-                className={`text-left px-4 py-2 mt-6 rounded font-bold text-white transition ${
-                    isStressOn
-                        ? 'bg-gray-600 hover:bg-gray-700'
-                        : 'bg-red-500 hover:bg-red-600'
-                } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-                {isLoading
-                    ? '⏳ 처리 중...'
-                    : isStressOn
-                    ? '🛑 부하 중지'
-                    : '🔥 부하 테스트 시작'}
-            </button>
-        </aside>
-    );
+      <button
+        onClick={() => onSelect('test')}
+        disabled={isLoading}
+        className={`mt-6 rounded px-4 py-2 text-left font-bold text-white transition ${
+          isStressOn ? 'bg-gray-600 hover:bg-gray-700' : 'bg-red-500 hover:bg-red-600'
+        } ${isLoading ? 'cursor-not-allowed opacity-50' : ''}`}
+      >
+        {isLoading
+          ? 'Processing...'
+          : isStressOn
+            ? 'Stop Stress Test'
+            : 'Start Stress Test'}
+      </button>
+    </aside>
+  );
 };
 
 export default Sidebar;
